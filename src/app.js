@@ -540,14 +540,15 @@ elements.soundToggle.addEventListener("click", () => {
   render();
 });
 
-function setView(view) {
+function setView(view, { persist = true } = {}) {
   const mobile = view === "mobile";
   elements.shell.classList.toggle("mobile-preview", mobile);
   document.body.classList.toggle("show-mobile-preview", mobile);
   for (const button of elements.viewButtons) {
     button.classList.toggle("active", button.dataset.view === view);
+    button.setAttribute("aria-pressed", String(button.dataset.view === view));
   }
-  window.localStorage.setItem("blackjack-view", view);
+  if (persist) window.localStorage.setItem("blackjack-view", view);
 }
 
 for (const button of elements.viewButtons) {
@@ -637,6 +638,17 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Enter" && !elements.deal.disabled) elements.deal.click();
 });
 
-setView(window.localStorage.getItem("blackjack-view") || "desktop");
+const phoneViewport = window.matchMedia("(max-width: 700px)");
+setView(
+  phoneViewport.matches
+    ? "mobile"
+    : window.localStorage.getItem("blackjack-view") || "desktop",
+  { persist: false },
+);
+
+phoneViewport.addEventListener("change", (event) => {
+  if (event.matches) setView("mobile", { persist: false });
+});
+
 render();
 window.setTimeout(() => openSessionDialog(true), 0);

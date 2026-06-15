@@ -1342,8 +1342,7 @@ dialog p {
 
   .brand small,
   .bet-stat,
-  .mode-badge,
-  .view-switch {
+  .mode-badge {
     display: none;
   }
 
@@ -1357,7 +1356,29 @@ dialog p {
   }
 
   .account-strip {
-    gap: 5px;
+    gap: 4px;
+  }
+
+  .view-switch {
+    display: flex;
+    padding: 2px;
+  }
+
+  .view-switch button {
+    width: 25px;
+    min-height: 25px;
+    overflow: hidden;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .view-switch button::after {
+    content: "D";
+    font-size: 8px;
+  }
+
+  .view-switch button[data-view="mobile"]::after {
+    content: "M";
   }
 
   .balance-stat {
