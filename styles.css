@@ -304,15 +304,27 @@ input:focus-visible {
   font-size: 13px;
 }
 
-.score-badge {
+.hand-total {
   display: grid;
-  min-width: 39px;
-  height: 27px;
-  place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 16px;
-  background: rgba(4, 29, 24, 0.45);
-  font: 500 11px "DM Mono", monospace;
+  min-width: 88px;
+  justify-items: center;
+  gap: 1px;
+  padding: 5px 9px;
+  border: 1px solid rgba(244, 200, 104, 0.3);
+  border-radius: 10px;
+  background: rgba(4, 29, 24, 0.62);
+}
+
+.hand-total span {
+  color: var(--gold-bright);
+  font-size: 6px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hand-total strong {
+  font: 500 13px "DM Mono", monospace;
 }
 
 .cards {
@@ -470,6 +482,11 @@ input:focus-visible {
 }
 
 .status-panel {
+  max-width: min(430px, 82%);
+  padding: 7px 15px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(4, 29, 24, 0.42);
   text-align: center;
 }
 
@@ -495,32 +512,6 @@ input:focus-visible {
 
 .status-panel.strategy-hint p {
   color: #bce8f7;
-}
-
-.current-count {
-  display: grid;
-  justify-items: center;
-  gap: 2px;
-  padding: 7px 16px;
-  border: 1px solid rgba(244, 200, 104, 0.35);
-  border-radius: 12px;
-  background: rgba(4, 29, 24, 0.72);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  transform: translateY(-17px);
-}
-
-.current-count span {
-  color: var(--gold-bright);
-  font-size: 7px;
-  font-weight: 800;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-}
-
-.current-count strong {
-  min-width: 76px;
-  text-align: center;
-  font: 500 21px "DM Mono", monospace;
 }
 
 .status-kicker {
@@ -1325,15 +1316,6 @@ dialog p {
   height: 81px;
 }
 
-.mobile-preview .current-count {
-  padding: 5px 12px;
-  transform: translateY(-12px);
-}
-
-.mobile-preview .current-count strong {
-  font-size: 17px;
-}
-
 .mobile-preview .cards {
   min-height: 81px;
 }
@@ -1588,10 +1570,17 @@ dialog p {
     font-size: 11px;
   }
 
-  .score-badge {
-    min-width: 34px;
-    height: 23px;
-    font-size: 9px;
+  .hand-total {
+    min-width: 72px;
+    padding: 3px 6px;
+  }
+
+  .hand-total span {
+    font-size: 5px;
+  }
+
+  .hand-total strong {
+    font-size: 10px;
   }
 
   .rule-line {
@@ -1602,19 +1591,9 @@ dialog p {
     font-size: 8px;
   }
 
-  .current-count {
-    gap: 1px;
-    padding: 4px 10px;
-    transform: translateY(-10px);
-  }
-
-  .current-count span {
-    font-size: 6px;
-  }
-
-  .current-count strong {
-    min-width: 68px;
-    font-size: 16px;
+  .status-panel {
+    max-width: 92%;
+    padding: 4px 9px;
   }
 
   .control-deck {

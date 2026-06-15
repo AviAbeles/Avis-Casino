@@ -36,8 +36,7 @@ const elements = {
   dealerScore: document.querySelector("#dealer-score"),
   playerHands: document.querySelector("#player-hands"),
   playerScore: document.querySelector("#player-score"),
-  currentCount: document.querySelector("#current-count"),
-  currentCountLabel: document.querySelector("#current-count-label"),
+  playerTotalLabel: document.querySelector("#player-total-label"),
   statusPanel: document.querySelector(".status-panel"),
   statusKicker: document.querySelector("#status-kicker"),
   statusMessage: document.querySelector("#status-message"),
@@ -168,29 +167,11 @@ function renderHands() {
   });
   elements.playerScore.textContent =
     visibleScores.length > 1
-      ? visibleScores.join(" / ")
+      ? visibleScores.join(" | ")
       : visibleScores[0] || "--";
+  elements.playerTotalLabel.textContent =
+    visibleScores.length > 1 ? "Hand totals" : "Your total";
   elements.dealerScore.textContent = formatHandTotal(dealerCards);
-
-  if (game.phase === "dealer") {
-    elements.currentCountLabel.textContent = "Dealer total";
-    elements.currentCount.textContent = formatHandTotal(dealerCards);
-  } else if (game.playerHands.length) {
-    const activeIndex = Math.min(
-      game.activeHandIndex,
-      game.playerHands.length - 1,
-    );
-    const activeCards = game.playerHands[activeIndex].cards.slice(
-      0,
-      ui.visiblePlayerCards[activeIndex] || 0,
-    );
-    elements.currentCountLabel.textContent =
-      game.playerHands.length > 1 ? `Hand ${activeIndex + 1} total` : "Hand total";
-    elements.currentCount.textContent = formatHandTotal(activeCards);
-  } else {
-    elements.currentCountLabel.textContent = "Hand total";
-    elements.currentCount.textContent = "--";
-  }
 }
 
 function renderHistory() {
@@ -274,11 +255,11 @@ function renderStatus() {
 
   if (ui.busy) {
     elements.statusKicker.textContent =
-      ui.stage === "dealer" ? "DEALER DRAWING" : "DEALING";
+      ui.stage === "dealer" ? "DEALER PLAYING" : "DEALING";
     elements.statusMessage.textContent =
       ui.stage === "dealer"
-        ? "The house completes its hand."
-        : "Cards are coming to the table.";
+        ? "Dealer draws to at least 17."
+        : "Please wait.";
     return;
   }
 
@@ -291,20 +272,23 @@ function renderStatus() {
   }
 
   const status = {
-    betting: "PLACE YOUR BET",
-    insurance: "INSURANCE",
-    player: "YOUR MOVE",
-    dealer: "DEALER'S TURN",
-    "round-over":
+    betting: ["BETTING", "Choose chips, then press Deal."],
+    insurance: ["INSURANCE", "Choose Insurance or No thanks."],
+    player: ["YOUR TURN", "Choose Hit, Stand, Double, or Split."],
+    dealer: ["DEALER'S TURN", "Dealer draws to at least 17."],
+    "round-over": [
       game.result === "loss"
-        ? "HOUSE WINS"
+        ? "ROUND LOST"
         : game.result === "push"
           ? "PUSH"
-          : "YOU WIN",
+          : "ROUND WON",
+      game.message,
+    ],
   };
 
-  elements.statusKicker.textContent = status[game.phase];
-  elements.statusMessage.textContent = game.message;
+  const [kicker, message] = status[game.phase];
+  elements.statusKicker.textContent = kicker;
+  elements.statusMessage.textContent = message;
 }
 
 function renderControls() {
@@ -560,10 +544,12 @@ function evaluateStrategyChoice(action) {
   ui.strategyHintAction = null;
   ui.strategyFeedback = {
     tone: correct ? "correct" : "wrong",
-    kicker: correct ? "CORRECT MOVE" : "TRY AGAIN",
+    kicker: correct
+      ? `CORRECT: ${recommendation.label.toUpperCase()}`
+      : `BEST MOVE: ${recommendation.label.toUpperCase()}`,
     message: correct
-      ? `${recommendation.label}. ${recommendation.reason}`
-      : `You chose ${action === "decline-insurance" ? "No insurance" : action}. Basic strategy says ${recommendation.label}.`,
+      ? recommendation.reason
+      : `${recommendation.reason} You chose ${action === "decline-insurance" ? "No insurance" : action}.`,
   };
 }
 
@@ -631,8 +617,8 @@ elements.strategyHint.addEventListener("click", () => {
   ui.strategyHintAction = recommendation.action;
   ui.strategyFeedback = {
     tone: "hint",
-    kicker: "STRATEGY HINT",
-    message: `${recommendation.label}. ${recommendation.reason}`,
+    kicker: `HINT: ${recommendation.label.toUpperCase()}`,
+    message: recommendation.reason,
   };
   render();
 });
