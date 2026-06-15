@@ -131,6 +131,24 @@ input:focus-visible {
   font: 500 15px "DM Mono", monospace;
 }
 
+.wallet-total {
+  min-width: 96px;
+  padding: 6px 10px;
+  border: 1px solid rgba(217, 164, 65, 0.35);
+  border-radius: 8px;
+  background: rgba(217, 164, 65, 0.08);
+  text-align: center;
+}
+
+.wallet-total span {
+  color: var(--gold-bright);
+}
+
+.wallet-total strong {
+  color: var(--cream);
+  font-size: 16px;
+}
+
 .view-switch {
   display: flex;
   padding: 3px;
@@ -448,6 +466,32 @@ input:focus-visible {
 
 .status-panel {
   text-align: center;
+}
+
+.current-count {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 7px 16px;
+  border: 1px solid rgba(244, 200, 104, 0.35);
+  border-radius: 12px;
+  background: rgba(4, 29, 24, 0.72);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transform: translateY(-17px);
+}
+
+.current-count span {
+  color: var(--gold-bright);
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.current-count strong {
+  min-width: 76px;
+  text-align: center;
+  font: 500 21px "DM Mono", monospace;
 }
 
 .status-kicker {
@@ -1096,6 +1140,16 @@ dialog p {
   font-size: 11px;
 }
 
+.mobile-preview .wallet-total {
+  min-width: 78px;
+  padding: 4px 6px;
+}
+
+.mobile-preview .wallet-total span {
+  display: block;
+  font-size: 6px;
+}
+
 .mobile-preview .icon-button {
   padding: 0 8px;
   font-size: 8px;
@@ -1155,6 +1209,15 @@ dialog p {
 .mobile-preview .card {
   width: 58px;
   height: 81px;
+}
+
+.mobile-preview .current-count {
+  padding: 5px 12px;
+  transform: translateY(-12px);
+}
+
+.mobile-preview .current-count strong {
+  font-size: 17px;
 }
 
 .mobile-preview .cards {
@@ -1302,12 +1365,18 @@ dialog p {
   }
 
   .balance-stat span {
-    display: none;
+    display: block;
+    font-size: 6px;
   }
 
   .balance-stat strong {
     margin: 0;
     font-size: 11px;
+  }
+
+  .wallet-total {
+    min-width: 76px;
+    padding: 3px 5px;
   }
 
   .icon-button {
@@ -1396,6 +1465,21 @@ dialog p {
 
   .status-panel p {
     font-size: 8px;
+  }
+
+  .current-count {
+    gap: 1px;
+    padding: 4px 10px;
+    transform: translateY(-10px);
+  }
+
+  .current-count span {
+    font-size: 6px;
+  }
+
+  .current-count strong {
+    min-width: 68px;
+    font-size: 16px;
   }
 
   .control-deck {

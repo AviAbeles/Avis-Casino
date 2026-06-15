@@ -4,6 +4,7 @@ import {
   BlackjackGame,
   createShoe,
   getHandDetails,
+  getHandTotals,
   getHandValue,
   isBlackjack,
 } from "../src/game.js";
@@ -51,6 +52,9 @@ test("aces are valued as 1 or 11 and soft hands are identified", () => {
     soft: false,
   });
   assert.equal(getHandValue([card("A"), card("A"), card("9")]), 21);
+  assert.deepEqual(getHandTotals([card("A"), card("2")]), [3, 13]);
+  assert.deepEqual(getHandTotals([card("A"), card("6"), card("10")]), [17]);
+  assert.deepEqual(getHandTotals([card("10"), card("7")]), [17]);
 });
 
 test("blackjack requires exactly two cards", () => {

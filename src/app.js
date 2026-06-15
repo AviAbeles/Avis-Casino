@@ -1,4 +1,4 @@
-import { BlackjackGame, getHandValue } from "./game.js";
+import { BlackjackGame, getHandTotals } from "./game.js";
 import { TableSound } from "./sound.js";
 
 const game = new BlackjackGame();
@@ -35,6 +35,8 @@ const elements = {
   dealerScore: document.querySelector("#dealer-score"),
   playerHands: document.querySelector("#player-hands"),
   playerScore: document.querySelector("#player-score"),
+  currentCount: document.querySelector("#current-count"),
+  currentCountLabel: document.querySelector("#current-count-label"),
   statusKicker: document.querySelector("#status-kicker"),
   statusMessage: document.querySelector("#status-message"),
   deal: document.querySelector("#deal"),
@@ -83,6 +85,10 @@ const suitMarkup = {
   D: "&#9830;",
   C: "&#9827;",
 };
+
+function formatHandTotal(cards) {
+  return cards.length ? getHandTotals(cards).join(" / ") : "--";
+}
 
 function cardMarkup(card, index, entering = false) {
   const isRed = ["H", "D"].includes(card.suit);
@@ -152,15 +158,33 @@ function renderHands() {
 
   const visibleScores = game.playerHands.map((hand, index) => {
     const cards = hand.cards.slice(0, ui.visiblePlayerCards[index] || 0);
-    return cards.length ? getHandValue(cards) : "--";
+    return formatHandTotal(cards);
   });
   elements.playerScore.textContent =
     visibleScores.length > 1
       ? visibleScores.join(" / ")
       : visibleScores[0] || "--";
-  elements.dealerScore.textContent = dealerCards.length
-    ? getHandValue(dealerCards)
-    : "--";
+  elements.dealerScore.textContent = formatHandTotal(dealerCards);
+
+  if (game.phase === "dealer") {
+    elements.currentCountLabel.textContent = "Dealer total";
+    elements.currentCount.textContent = formatHandTotal(dealerCards);
+  } else if (game.playerHands.length) {
+    const activeIndex = Math.min(
+      game.activeHandIndex,
+      game.playerHands.length - 1,
+    );
+    const activeCards = game.playerHands[activeIndex].cards.slice(
+      0,
+      ui.visiblePlayerCards[activeIndex] || 0,
+    );
+    elements.currentCountLabel.textContent =
+      game.playerHands.length > 1 ? `Hand ${activeIndex + 1} total` : "Hand total";
+    elements.currentCount.textContent = formatHandTotal(activeCards);
+  } else {
+    elements.currentCountLabel.textContent = "Hand total";
+    elements.currentCount.textContent = "--";
+  }
 }
 
 function renderHistory() {

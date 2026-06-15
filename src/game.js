@@ -57,6 +57,25 @@ export function getHandValue(cards) {
   return getHandDetails(cards).value;
 }
 
+export function getHandTotals(cards) {
+  let low = 0;
+  let hasAce = false;
+
+  for (const card of cards) {
+    if (card.rank === "A") {
+      hasAce = true;
+      low += 1;
+    } else if (["K", "Q", "J"].includes(card.rank)) {
+      low += 10;
+    } else {
+      low += Number(card.rank);
+    }
+  }
+
+  const high = low + 10;
+  return hasAce && high <= 21 ? [low, high] : [low];
+}
+
 export function isBlackjack(cards) {
   return cards.length === 2 && getHandValue(cards) === 21;
 }
