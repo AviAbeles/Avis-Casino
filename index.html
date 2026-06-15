@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A polished, browser-based blackjack table."
+    />
+    <title>Twenty One | Blackjack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Twenty One blackjack home">
+          <span class="brand-mark" aria-hidden="true">21</span>
+          <span>
+            <strong>TWENTY ONE</strong>
+            <small>BLACKJACK TABLE</small>
+          </span>
+        </a>
+
+        <div class="account-strip">
+          <div class="view-switch" aria-label="Layout view">
+            <button
+              class="active"
+              data-view="desktop"
+              type="button"
+              aria-label="Desktop view"
+            >
+              Desktop
+            </button>
+            <button data-view="mobile" type="button" aria-label="Mobile view">
+              Mobile
+            </button>
+          </div>
+          <div class="account-stat balance-stat">
+            <span>Balance</span>
+            <strong id="balance">£1,000</strong>
+          </div>
+          <div class="account-stat bet-stat">
+            <span>Current bet</span>
+            <strong id="current-bet">£0</strong>
+          </div>
+          <span class="mode-badge" id="mode-badge" hidden>Hard mode</span>
+          <button
+            class="icon-button sound-button"
+            id="sound-toggle"
+            type="button"
+            aria-pressed="false"
+            aria-label="Mute sound effects"
+          >
+            Sound on
+          </button>
+          <button class="icon-button" id="session-settings" type="button">
+            New session
+          </button>
+        </div>
+      </header>
+
+      <main class="game-layout">
+        <section class="table-wrap" aria-label="Blackjack table">
+          <div class="table">
+            <div class="table-glow" aria-hidden="true"></div>
+
+            <div class="hand-zone dealer-zone">
+              <div class="hand-heading">
+                <div>
+                  <span class="eyebrow">HOUSE</span>
+                  <h2>Dealer</h2>
+                </div>
+                <span class="score-badge" id="dealer-score">--</span>
+              </div>
+              <div class="cards" id="dealer-cards" aria-live="polite"></div>
+            </div>
+
+            <div class="table-center">
+              <div class="rule-line">
+                <span>BLACKJACK PAYS 3 TO 2</span>
+                <span class="rule-dot"></span>
+                <span>DEALER HITS SOFT 17</span>
+              </div>
+
+              <div class="status-panel" aria-live="polite">
+                <span class="status-kicker" id="status-kicker">PLACE YOUR BET</span>
+                <p id="status-message">Choose your chips, then deal the cards.</p>
+              </div>
+            </div>
+
+            <div class="hand-zone player-zone">
+              <div class="hand-heading">
+                <div>
+                  <span class="eyebrow">PLAYER</span>
+                  <h2>Your hands</h2>
+                </div>
+                <span class="score-badge" id="player-score">--</span>
+              </div>
+              <div
+                class="player-hands"
+                id="player-hands"
+                aria-live="polite"
+              ></div>
+            </div>
+
+            <div class="bet-spot" id="bet-spot" aria-hidden="true">
+              <span id="bet-spot-value">£0</span>
+            </div>
+          </div>
+
+          <div class="control-deck">
+            <div class="bet-controls">
+              <div class="control-label">
+                <span>Place your bet</span>
+                <span class="bet-edit-actions">
+                  <button id="undo-bet" type="button">Undo</button>
+                  <button id="clear-bet" type="button">Clear</button>
+                </span>
+              </div>
+              <div class="chip-rack">
+                <div class="chips" id="primary-chips" aria-label="Betting chips"></div>
+                <div class="extra-chips-wrap">
+                  <button
+                    class="extra-chips-toggle"
+                    id="extra-chips-toggle"
+                    type="button"
+                    aria-expanded="false"
+                    aria-controls="extra-chips"
+                  >
+                    Extra
+                  </button>
+                  <div class="extra-chips" id="extra-chips" hidden></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="action-controls">
+              <button class="action-button secondary" id="hit" type="button">
+                <span class="key-hint">H</span>
+                Hit
+              </button>
+              <button class="action-button secondary" id="stand" type="button">
+                <span class="key-hint">S</span>
+                Stand
+              </button>
+              <button class="action-button secondary" id="double" type="button">
+                <span class="key-hint">D</span>
+                Double
+              </button>
+              <button class="action-button secondary" id="split" type="button">
+                <span class="key-hint">P</span>
+                Split
+              </button>
+              <button
+                class="action-button insurance"
+                id="insurance"
+                type="button"
+                hidden
+              >
+                Insurance
+              </button>
+              <button
+                class="action-button secondary"
+                id="decline-insurance"
+                type="button"
+                hidden
+              >
+                No thanks
+              </button>
+              <button class="action-button primary" id="deal" type="button">
+                Deal cards
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="sidebar">
+          <section class="side-card">
+            <div class="side-card-heading">
+              <div>
+                <span class="eyebrow">SESSION</span>
+                <h3>Table stats</h3>
+              </div>
+              <span class="live-dot">LIVE</span>
+            </div>
+            <div class="stats-grid">
+              <div><strong id="wins">0</strong><span>Wins</span></div>
+              <div><strong id="pushes">0</strong><span>Pushes</span></div>
+              <div><strong id="losses">0</strong><span>Losses</span></div>
+            </div>
+          </section>
+
+          <section class="side-card">
+            <div class="side-card-heading">
+              <div>
+                <span class="eyebrow">RECENT</span>
+                <h3>Round history</h3>
+              </div>
+            </div>
+            <ol class="history-list" id="history-list">
+              <li class="empty-history">Your completed rounds will appear here.</li>
+            </ol>
+          </section>
+
+          <section class="side-card how-to">
+            <span class="eyebrow">QUICK GUIDE</span>
+            <h3>Get close to 21.</h3>
+            <p>
+              Six decks, freshly shuffled each hand. Dealer hits soft 17.
+              Splitting is limited to two hands. No surrender.
+            </p>
+            <div class="guide-row"><span>Blackjack</span><strong>3:2</strong></div>
+            <div class="guide-row"><span>Regular win</span><strong>1:1</strong></div>
+            <div class="guide-row"><span>Insurance</span><strong>2:1</strong></div>
+            <div class="guide-row"><span>Minimum bet</span><strong>10p</strong></div>
+            <div class="guide-row"><span>Theoretical RTP</span><strong>99.40%</strong></div>
+            <small class="malfunction-copy">Malfunction voids all plays and pays.</small>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <dialog id="session-dialog">
+      <form id="session-form">
+        <span class="eyebrow">TABLE SETUP</span>
+        <h2>Choose your bankroll</h2>
+        <p>Set the amount you want to bring to the table.</p>
+
+        <div class="bankroll-presets" aria-label="Starting bankroll presets">
+          <button data-bankroll="100" type="button">£100</button>
+          <button data-bankroll="500" type="button">£500</button>
+          <button data-bankroll="1000" type="button">£1,000</button>
+          <button data-bankroll="2500" type="button">£2,500</button>
+        </div>
+
+        <label class="money-field">
+          <span>Starting money</span>
+          <span class="money-input">
+            <span>£</span>
+            <input
+              id="starting-bankroll"
+              type="number"
+              min="0.1"
+              max="1000000"
+              step="0.1"
+              value="1000"
+              required
+            />
+          </span>
+        </label>
+
+        <label class="hard-mode-option">
+          <input id="hard-mode" type="checkbox" />
+          <span>
+            <strong>Hard mode</strong>
+            <small>
+              Once the challenge starts, the bankroll is locked until you go
+              bankrupt or forfeit.
+            </small>
+          </span>
+        </label>
+
+        <p class="form-error" id="session-error" role="alert"></p>
+
+        <div class="dialog-actions">
+          <button class="dialog-cancel" id="session-cancel" type="button">
+            Cancel
+          </button>
+          <button class="dialog-confirm" type="submit">Start session</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="forfeit-dialog">
+      <form method="dialog">
+        <span class="eyebrow">HARD MODE</span>
+        <h2>Forfeit this challenge?</h2>
+        <p>
+          Your current bankroll and session record will be cleared. This is the
+          only way to change your starting money before bankruptcy.
+        </p>
+        <div class="dialog-actions">
+          <button value="cancel" class="dialog-cancel">Keep playing</button>
+          <button value="confirm" class="dialog-danger">Forfeit challenge</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
