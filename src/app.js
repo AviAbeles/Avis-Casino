@@ -29,6 +29,8 @@ const ROULETTE_CHIP_VALUES = [
 const storedMuted =
   window.localStorage.getItem("avis-casino-muted") === "true" ||
   window.localStorage.getItem("blackjack-muted") === "true";
+const storedShowRouletteSpin =
+  window.localStorage.getItem("avis-casino-show-roulette-spin") !== "false";
 const sound = new TableSound({ muted: storedMuted });
 const money = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -106,6 +108,10 @@ const elements = {
   sessionError: document.querySelector("#session-error"),
   forfeitDialog: document.querySelector("#forfeit-dialog"),
   rouletteResult: document.querySelector("#roulette-result"),
+  rouletteWheelPanel: document.querySelector("#roulette-wheel-panel"),
+  rouletteWheel: document.querySelector("#roulette-wheel"),
+  rouletteWheelPockets: document.querySelector("#roulette-wheel-pockets"),
+  rouletteSpinViewToggle: document.querySelector("#roulette-spin-view-toggle"),
   rouletteNumberGrid: document.querySelector("#roulette-number-grid"),
   rouletteComboGrid: document.querySelector("#roulette-combo-grid"),
   rouletteOutsideGrid: document.querySelector("#roulette-outside-grid"),
@@ -142,6 +148,7 @@ const ui = {
   walletMode: "universal",
   selectedRouletteChip: 0.01,
   rouletteInfoPanel: "paytable",
+  showRouletteSpin: storedShowRouletteSpin,
   gameMode: "normal",
   strategyFeedback: null,
   strategyHintAction: null,
@@ -433,15 +440,7 @@ function stakeBadge(stake) {
   return stake > 0 ? `<small>${formatMoney(stake)}</small>` : "";
 }
 
-function rouletteButton({
-  className = "",
-  label,
-  type,
-  numbers,
-  section,
-  positionKey,
-}) {
-  const spec = createBetSpec({ type, label, numbers, section, positionKey });
+function rouletteBetMarkup({ className = "", label, spec }) {
   const stake = stakeForPosition(spec.positionKey);
   return `
     <button
@@ -459,6 +458,18 @@ function rouletteButton({
   `;
 }
 
+function rouletteButton({
+  className = "",
+  label,
+  type,
+  numbers,
+  section,
+  positionKey,
+}) {
+  const spec = createBetSpec({ type, label, numbers, section, positionKey });
+  return rouletteBetMarkup({ className, label, spec });
+}
+
 function renderRouletteNumberGrid() {
   const zeroButton = rouletteButton({
     className: "roulette-number roulette-number-zero green-number",
@@ -466,7 +477,13 @@ function renderRouletteNumberGrid() {
     type: "straight",
     numbers: [0],
   });
-  const numberButtons = Array.from({ length: 36 }, (_, index) => index + 1)
+  const tableRows = [
+    Array.from({ length: 12 }, (_, index) => (index + 1) * 3),
+    Array.from({ length: 12 }, (_, index) => (index + 1) * 3 - 1),
+    Array.from({ length: 12 }, (_, index) => (index + 1) * 3 - 2),
+  ];
+  const numberButtons = tableRows
+    .flat()
     .map((number) =>
       rouletteButton({
         className: `roulette-number ${getNumberColor(number)}-number`,
@@ -476,10 +493,24 @@ function renderRouletteNumberGrid() {
       }),
     )
     .join("");
+  const columnButtons = [
+    ["column-3", "2 to 1"],
+    ["column-2", "2 to 1"],
+    ["column-1", "2 to 1"],
+  ]
+    .map(([kind, label]) =>
+      rouletteBetMarkup({
+        className: "roulette-column-button roulette-board-bet",
+        label,
+        spec: createOutsideBet(kind, label),
+      }),
+    )
+    .join("");
 
   elements.rouletteNumberGrid.innerHTML = `
     ${zeroButton}
     <div class="roulette-main-numbers">${numberButtons}</div>
+    <div class="roulette-column-bets">${columnButtons}</div>
   `;
 }
 
@@ -551,61 +582,43 @@ function renderRouletteComboGrid() {
     .join("");
 
   elements.rouletteComboGrid.innerHTML = `
-    <details open>
-      <summary>Street bets</summary>
-      <div>${streets}</div>
-    </details>
-    <details>
-      <summary>Line bets</summary>
-      <div>${lines}</div>
-    </details>
-    <details>
-      <summary>Corner bets</summary>
-      <div>${corners}</div>
-    </details>
-    <details>
-      <summary>Split bets</summary>
-      <div>${splits}</div>
+    <details class="roulette-advanced-bets">
+      <summary>Advanced inside bets: split, street, corner, line</summary>
+      <div class="roulette-advanced-grid">
+        <section><strong>Splits</strong><div>${splits}</div></section>
+        <section><strong>Streets</strong><div>${streets}</div></section>
+        <section><strong>Corners</strong><div>${corners}</div></section>
+        <section><strong>Lines</strong><div>${lines}</div></section>
+      </div>
     </details>
   `;
 }
 
 function renderRouletteOutsideGrid() {
-  const outsideBets = [
-    ["red", "Red"],
-    ["black", "Black"],
-    ["odd", "Odd"],
-    ["even", "Even"],
-    ["low", "1-18"],
-    ["high", "19-36"],
+  const dozenBets = [
     ["dozen-1", "1st 12"],
     ["dozen-2", "2nd 12"],
     ["dozen-3", "3rd 12"],
-    ["column-1", "Column 1"],
-    ["column-2", "Column 2"],
-    ["column-3", "Column 3"],
   ];
+  const evenMoneyBets = [
+    ["low", "1-18"],
+    ["even", "Even"],
+    ["red", "Red"],
+    ["black", "Black"],
+    ["odd", "Odd"],
+    ["high", "19-36"],
+  ];
+  const button = ([kind, label]) =>
+    rouletteBetMarkup({
+      className: `roulette-outside-button roulette-board-bet ${kind}`,
+      label,
+      spec: createOutsideBet(kind, label),
+    });
 
-  elements.rouletteOutsideGrid.innerHTML = outsideBets
-    .map(([kind, label]) => {
-      const spec = createOutsideBet(kind, label);
-      const stake = stakeForPosition(spec.positionKey);
-      return `
-        <button
-          class="roulette-outside-button ${kind} ${stake > 0 ? "has-stake" : ""}"
-          data-roulette-type="${spec.type}"
-          data-roulette-label="${spec.label}"
-          data-roulette-numbers="${spec.numbers.join(",")}"
-          data-roulette-section="${spec.section}"
-          data-roulette-position="${spec.positionKey}"
-          type="button"
-          ${ui.busy ? "disabled" : ""}
-        >
-          <span>${label}</span>${stakeBadge(stake)}
-        </button>
-      `;
-    })
-    .join("");
+  elements.rouletteOutsideGrid.innerHTML = `
+    <div class="roulette-dozen-row">${dozenBets.map(button).join("")}</div>
+    <div class="roulette-even-money-row">${evenMoneyBets.map(button).join("")}</div>
+  `;
 }
 
 function renderRacetrack() {
@@ -700,7 +713,36 @@ function renderRoulettePaytable() {
   `;
 }
 
+function renderRouletteWheel() {
+  if (!elements.rouletteWheelPanel || !elements.rouletteWheel) return;
+
+  elements.rouletteWheelPanel.hidden = !ui.showRouletteSpin;
+  elements.rouletteSpinViewToggle.checked = ui.showRouletteSpin;
+  elements.rouletteView.classList.toggle("hide-spin-view", !ui.showRouletteSpin);
+  elements.rouletteWheel.classList.toggle(
+    "spinning",
+    ui.busy && ui.activeGame === "roulette" && ui.showRouletteSpin,
+  );
+
+  if (elements.rouletteWheelPockets && !elements.rouletteWheelPockets.children.length) {
+    elements.rouletteWheelPockets.innerHTML = EUROPEAN_WHEEL.map((number, index) => `
+      <span
+        class="${getNumberColor(number)}-number"
+        style="--pocket-index: ${index}"
+      >${number}</span>
+    `).join("");
+  }
+
+  const winningNumber = roulette.lastSpin?.number ?? 0;
+  const winningIndex = EUROPEAN_WHEEL.indexOf(winningNumber);
+  const angle = winningIndex >= 0 ? (winningIndex * 360) / EUROPEAN_WHEEL.length : 0;
+  elements.rouletteWheel.style.setProperty("--winning-angle", `${angle}deg`);
+  elements.rouletteWheel.dataset.resultColor =
+    roulette.lastSpin?.color || "green";
+}
+
 function renderRoulette() {
+  renderRouletteWheel();
   renderRouletteNumberGrid();
   renderRouletteComboGrid();
   renderRouletteOutsideGrid();
@@ -1071,7 +1113,7 @@ async function spinRoulette() {
   ui.busy = true;
   render();
   sound.spin();
-  await wait(900);
+  await wait(ui.showRouletteSpin ? 1300 : 350);
 
   try {
     roulette.spin();
@@ -1202,6 +1244,15 @@ elements.rouletteSpecialGrid.addEventListener("click", (event) => {
 
 elements.rouletteExtraChipsToggle.addEventListener("click", () => {
   ui.rouletteExtraChipsOpen = !ui.rouletteExtraChipsOpen;
+  render();
+});
+
+elements.rouletteSpinViewToggle.addEventListener("change", () => {
+  ui.showRouletteSpin = elements.rouletteSpinViewToggle.checked;
+  window.localStorage.setItem(
+    "avis-casino-show-roulette-spin",
+    String(ui.showRouletteSpin),
+  );
   render();
 });
 

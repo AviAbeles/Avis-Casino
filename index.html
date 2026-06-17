@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260617-menu3" />
+    <link rel="stylesheet" href="./styles.css?v=20260617-roulette2" />
   </head>
   <body>
     <div class="app-shell">
@@ -278,30 +278,47 @@
               </div>
             </div>
 
-            <div class="roulette-board-shell">
-              <div class="roulette-board-heading">
-                <span>Inside board</span>
-                <small>1p minimum · inside bets cumulative</small>
-              </div>
-              <div class="roulette-number-grid" id="roulette-number-grid"></div>
-              <div class="roulette-combo-grid" id="roulette-combo-grid"></div>
-            </div>
+            <div class="roulette-play-area">
+              <section
+                class="roulette-wheel-panel"
+                id="roulette-wheel-panel"
+                aria-label="Roulette spin view"
+              >
+                <div class="roulette-wheel" id="roulette-wheel" aria-hidden="true">
+                  <div class="roulette-wheel-pockets" id="roulette-wheel-pockets"></div>
+                  <div class="roulette-wheel-track"></div>
+                  <div class="roulette-wheel-inner">
+                    <span>AC</span>
+                  </div>
+                  <i class="roulette-ball"></i>
+                </div>
+                <div class="roulette-wheel-copy">
+                  <span>Spin view</span>
+                  <strong>Wheel animation</strong>
+                  <small>Can be hidden in Roulette settings.</small>
+                </div>
+              </section>
 
-            <div class="roulette-outside-shell">
-              <div class="roulette-board-heading">
-                <span>Outside bets</span>
-                <small>Minimums and maximums apply per position</small>
-              </div>
-              <div class="roulette-outside-grid" id="roulette-outside-grid"></div>
-            </div>
+              <div class="roulette-table-surface">
+                <div class="roulette-board-shell">
+                  <div class="roulette-board-heading">
+                    <span>Place chips on the table</span>
+                    <small>Click a chip, then click a number or wager area</small>
+                  </div>
+                  <div class="roulette-number-grid" id="roulette-number-grid"></div>
+                  <div class="roulette-outside-grid" id="roulette-outside-grid"></div>
+                  <div class="roulette-combo-grid" id="roulette-combo-grid"></div>
+                </div>
 
-            <div class="roulette-racetrack-shell">
-              <div class="roulette-board-heading">
-                <span>Racetrack</span>
-                <small>Neighbours, French bets, and colour split shortcuts</small>
+                <div class="roulette-racetrack-shell">
+                  <div class="roulette-board-heading">
+                    <span>Racetrack</span>
+                    <small>Neighbours, French bets, and colour split shortcuts</small>
+                  </div>
+                  <div class="racetrack-numbers" id="racetrack-numbers"></div>
+                  <div class="roulette-special-grid" id="roulette-special-grid"></div>
+                </div>
               </div>
-              <div class="racetrack-numbers" id="racetrack-numbers"></div>
-              <div class="roulette-special-grid" id="roulette-special-grid"></div>
             </div>
           </div>
 
@@ -348,6 +365,13 @@
               <button class="action-button primary" id="roulette-spin" type="button">
                 Spin
               </button>
+            </div>
+
+            <div class="roulette-settings">
+              <label class="toggle-setting">
+                <input id="roulette-spin-view-toggle" type="checkbox" checked />
+                <span>Show spin view</span>
+              </label>
             </div>
           </div>
         </section>
@@ -555,6 +579,6 @@
         );
       }
     </script>
-    <script type="module" src="./src/app.js?v=20260617-menu3"></script>
+    <script type="module" src="./src/app.js?v=20260617-roulette2"></script>
   </body>
 </html>
