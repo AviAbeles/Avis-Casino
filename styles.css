@@ -174,6 +174,36 @@ input:focus-visible {
   color: var(--gold-bright);
 }
 
+.game-switch {
+  display: flex;
+  padding: 3px;
+  border: 1px solid rgba(217, 164, 65, 0.22);
+  border-radius: 8px;
+  background: rgba(217, 164, 65, 0.055);
+}
+
+.game-switch button {
+  min-height: 27px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.game-switch button.active {
+  background: rgba(217, 164, 65, 0.2);
+  color: var(--gold-bright);
+}
+
+.game-switch button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .mode-badge {
   padding: 5px 8px;
   border: 1px solid rgba(214, 85, 85, 0.38);
@@ -697,6 +727,15 @@ input:focus-visible {
   opacity: 0.35;
 }
 
+.chip.selected-chip {
+  border-color: var(--gold-bright);
+  color: var(--gold-bright);
+  box-shadow:
+    inset 0 0 0 2px rgba(0, 0, 0, 0.2),
+    0 0 0 3px rgba(244, 200, 104, 0.16);
+  transform: translateY(-2px);
+}
+
 .chip-tone-0 {
   background: #3d635b;
 }
@@ -808,6 +847,426 @@ input:focus-visible {
   border-radius: 4px;
   color: var(--muted);
   font: 500 7px "DM Mono", monospace;
+}
+
+.roulette-layout {
+  grid-template-columns: minmax(0, 1fr) 330px;
+}
+
+.roulette-wrap {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.roulette-table {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  gap: 9px;
+  overflow-y: auto;
+  border: 1px solid rgba(217, 164, 65, 0.2);
+  border-radius: 20px 20px 10px 10px;
+  background:
+    radial-gradient(circle at 18% 4%, rgba(214, 85, 85, 0.16), transparent 18rem),
+    radial-gradient(circle at 82% 0%, rgba(64, 185, 135, 0.15), transparent 16rem),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.014)),
+    var(--felt-dark);
+  padding: 13px;
+  box-shadow: var(--shadow), inset 0 0 70px rgba(0, 0, 0, 0.23);
+}
+
+.roulette-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.roulette-hero h1 {
+  margin: 4px 0;
+  font-size: 21px;
+  line-height: 1.05;
+}
+
+.roulette-hero p {
+  max-width: 620px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.roulette-result {
+  display: grid;
+  min-width: 112px;
+  justify-items: center;
+  gap: 2px;
+  padding: 10px 14px;
+  border: 1px solid rgba(244, 200, 104, 0.32);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.26);
+  text-align: center;
+}
+
+.roulette-result span,
+.roulette-result small {
+  color: var(--muted);
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.roulette-result strong {
+  font: 800 32px/1 "DM Mono", monospace;
+}
+
+.roulette-result.red-number strong {
+  color: #ff7474;
+}
+
+.roulette-result.black-number strong {
+  color: var(--cream);
+}
+
+.roulette-result.green-number strong {
+  color: #75e2ae;
+}
+
+.roulette-board-shell,
+.roulette-outside-shell,
+.roulette-racetrack-shell {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.roulette-board-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+  color: var(--gold-bright);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.roulette-board-heading small {
+  color: var(--muted);
+  font-size: 7px;
+  letter-spacing: 0.06em;
+  text-transform: none;
+}
+
+.roulette-number-grid {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 6px;
+}
+
+.roulette-main-numbers {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(34px, 1fr));
+  gap: 4px;
+}
+
+.roulette-number,
+.roulette-combo-button,
+.roulette-outside-button,
+.racetrack-number,
+.roulette-special-grid button {
+  position: relative;
+  min-height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--cream);
+  font: 800 9px "DM Mono", monospace;
+  cursor: pointer;
+}
+
+.roulette-number:hover:not(:disabled),
+.roulette-combo-button:hover:not(:disabled),
+.roulette-outside-button:hover:not(:disabled),
+.racetrack-number:hover:not(:disabled),
+.roulette-special-grid button:hover:not(:disabled) {
+  border-color: rgba(244, 200, 104, 0.5);
+  filter: brightness(1.12);
+}
+
+.roulette-number:disabled,
+.roulette-combo-button:disabled,
+.roulette-outside-button:disabled,
+.racetrack-number:disabled,
+.roulette-special-grid button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.roulette-number small,
+.roulette-combo-button small,
+.roulette-outside-button small {
+  position: absolute;
+  right: 4px;
+  bottom: 3px;
+  color: var(--gold-bright);
+  font-size: 6px;
+}
+
+.roulette-number.has-stake,
+.roulette-combo-button.has-stake,
+.roulette-outside-button.has-stake {
+  border-color: rgba(244, 200, 104, 0.62);
+  box-shadow: inset 0 0 0 1px rgba(244, 200, 104, 0.14);
+}
+
+.red-number {
+  background: linear-gradient(145deg, #b53e45, #72232b);
+}
+
+.black-number {
+  background: linear-gradient(145deg, #222b2a, #090d0c);
+}
+
+.green-number {
+  background: linear-gradient(145deg, #168765, #07543d);
+}
+
+.roulette-number-zero {
+  min-height: 100%;
+}
+
+.roulette-combo-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.roulette-combo-grid details {
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.026);
+}
+
+.roulette-combo-grid summary {
+  padding: 7px 8px;
+  color: var(--gold-bright);
+  font-size: 8px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.roulette-combo-grid details > div {
+  display: grid;
+  max-height: 118px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  overflow-y: auto;
+  padding: 0 7px 7px;
+}
+
+.roulette-combo-button {
+  min-height: 27px;
+  font-size: 7px;
+}
+
+.roulette-outside-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.roulette-outside-button {
+  min-height: 38px;
+  font-size: 8px;
+}
+
+.roulette-outside-button.red {
+  border-color: rgba(214, 85, 85, 0.6);
+  background: rgba(214, 85, 85, 0.24);
+}
+
+.roulette-outside-button.black {
+  background: rgba(0, 0, 0, 0.38);
+}
+
+.racetrack-numbers {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+}
+
+.racetrack-number {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  font-size: 8px;
+}
+
+.roulette-special-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.roulette-special-grid button {
+  min-height: 32px;
+  padding: 0 6px;
+  font-family: "Manrope", system-ui, sans-serif;
+  font-size: 8px;
+}
+
+.roulette-control-deck {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) 300px;
+  gap: 16px;
+  align-items: center;
+  min-height: 74px;
+  padding: 9px 13px;
+  border: 1px solid var(--line);
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
+  background: var(--panel);
+}
+
+.roulette-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.roulette-slip-card .side-card-heading strong {
+  color: var(--gold-bright);
+  font: 500 12px "DM Mono", monospace;
+}
+
+.roulette-bet-list {
+  height: 158px;
+}
+
+.roulette-validation {
+  min-height: 30px;
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.saved-bets {
+  display: grid;
+  gap: 6px;
+}
+
+.saved-bet {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.saved-bet strong {
+  color: var(--cream);
+  font-family: "DM Mono", monospace;
+}
+
+.saved-bet button {
+  min-height: 24px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--muted);
+  font-size: 7px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.roulette-info-card {
+  padding: 0;
+}
+
+.roulette-info-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: #030403;
+}
+
+.roulette-info-tabs button {
+  min-height: 42px;
+  border: 0;
+  background: transparent;
+  color: #777;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.roulette-info-tabs button.active {
+  color: #bb2f25;
+}
+
+.roulette-paytable {
+  width: 100%;
+  border-collapse: collapse;
+  background: #030403;
+  color: #ddd;
+  font-family: "Manrope", system-ui, sans-serif;
+  text-align: center;
+}
+
+.roulette-paytable th,
+.roulette-paytable td {
+  padding: 7px 5px;
+  border-left: 2px solid #2c2c2c;
+  font-size: 10px;
+}
+
+.roulette-paytable th:first-child,
+.roulette-paytable td:first-child {
+  border-left: 0;
+}
+
+.roulette-paytable th {
+  background: #242424;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.roulette-paytable tr:nth-child(even) td {
+  background: #262626;
+}
+
+.roulette-info-card p {
+  padding: 12px 14px 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.roulette-info-card .malfunction-copy {
+  padding: 10px 14px 14px;
 }
 
 .sidebar {
@@ -976,7 +1435,7 @@ input:focus-visible {
 }
 
 dialog {
-  width: min(420px, calc(100% - 28px));
+  width: min(520px, calc(100% - 28px));
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 14px;
   background: #101c1a;
@@ -1017,6 +1476,27 @@ dialog p {
   grid-template-columns: repeat(3, 1fr);
   gap: 7px;
   margin-top: 16px;
+}
+
+.session-section {
+  margin-top: 14px;
+}
+
+.session-section-title {
+  color: var(--gold-bright);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.session-section .game-mode-options {
+  margin-top: 6px;
+}
+
+.casino-game-options,
+.wallet-mode-options {
+  grid-template-columns: repeat(2, 1fr);
 }
 
 .game-mode-options label {
@@ -1240,6 +1720,22 @@ dialog p {
   content: "M";
 }
 
+.mobile-preview .game-switch button {
+  width: 27px;
+  overflow: hidden;
+  padding: 0;
+  font-size: 0;
+}
+
+.mobile-preview .game-switch button::after {
+  content: "B";
+  font-size: 9px;
+}
+
+.mobile-preview .game-switch button[data-game-switch="roulette"]::after {
+  content: "R";
+}
+
 .mobile-preview .account-stat strong {
   font-size: 11px;
 }
@@ -1368,6 +1864,86 @@ dialog p {
   display: none;
 }
 
+.mobile-preview .roulette-layout {
+  height: calc(100dvh - 74px);
+  grid-template-columns: 1fr;
+  overflow-y: auto;
+}
+
+.mobile-preview .roulette-layout .sidebar {
+  display: grid;
+  grid-template-rows: auto auto auto;
+}
+
+.mobile-preview .roulette-table {
+  overflow: visible;
+  padding: 9px;
+}
+
+.mobile-preview .roulette-hero {
+  align-items: stretch;
+}
+
+.mobile-preview .roulette-hero h1 {
+  font-size: 15px;
+}
+
+.mobile-preview .roulette-hero p {
+  display: none;
+}
+
+.mobile-preview .roulette-result {
+  min-width: 72px;
+  padding: 7px 8px;
+}
+
+.mobile-preview .roulette-result strong {
+  font-size: 22px;
+}
+
+.mobile-preview .roulette-number-grid {
+  grid-template-columns: 38px minmax(0, 1fr);
+}
+
+.mobile-preview .roulette-main-numbers {
+  grid-template-columns: repeat(6, minmax(30px, 1fr));
+}
+
+.mobile-preview .roulette-number {
+  min-height: 28px;
+  font-size: 8px;
+}
+
+.mobile-preview .roulette-combo-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.mobile-preview .roulette-combo-grid details > div {
+  max-height: 80px;
+}
+
+.mobile-preview .roulette-outside-grid,
+.mobile-preview .roulette-special-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mobile-preview .roulette-control-deck {
+  grid-template-columns: 1fr;
+  gap: 6px;
+  padding: 7px 8px;
+  position: sticky;
+  bottom: 0;
+}
+
+.mobile-preview .roulette-actions {
+  grid-template-columns: 1fr 1fr;
+}
+
+.mobile-preview .roulette-bet-list {
+  height: auto;
+  max-height: 100px;
+}
+
 .mobile-preview .bet-controls {
   display: grid;
   grid-template-columns: 88px 1fr;
@@ -1472,6 +2048,23 @@ dialog p {
     padding: 2px;
   }
 
+  .game-switch button {
+    width: 25px;
+    min-height: 25px;
+    overflow: hidden;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .game-switch button::after {
+    content: "B";
+    font-size: 8px;
+  }
+
+  .game-switch button[data-game-switch="roulette"]::after {
+    content: "R";
+  }
+
   .view-switch button {
     width: 25px;
     min-height: 25px;
@@ -1534,6 +2127,85 @@ dialog p {
   .game-layout {
     height: calc(100dvh - 56px);
     padding-top: 6px;
+  }
+
+  .roulette-layout {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .roulette-layout .sidebar {
+    display: grid;
+    grid-template-rows: auto auto auto;
+  }
+
+  .roulette-table {
+    overflow: visible;
+    padding: 9px;
+  }
+
+  .roulette-hero {
+    align-items: stretch;
+  }
+
+  .roulette-hero h1 {
+    font-size: 15px;
+  }
+
+  .roulette-hero p {
+    display: none;
+  }
+
+  .roulette-result {
+    min-width: 72px;
+    padding: 7px 8px;
+  }
+
+  .roulette-result strong {
+    font-size: 22px;
+  }
+
+  .roulette-number-grid {
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+
+  .roulette-main-numbers {
+    grid-template-columns: repeat(6, minmax(30px, 1fr));
+  }
+
+  .roulette-number {
+    min-height: 28px;
+    font-size: 8px;
+  }
+
+  .roulette-combo-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .roulette-combo-grid details > div {
+    max-height: 80px;
+  }
+
+  .roulette-outside-grid,
+  .roulette-special-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .roulette-control-deck {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 7px 8px;
+    position: sticky;
+    bottom: 0;
+  }
+
+  .roulette-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .roulette-bet-list {
+    height: auto;
+    max-height: 100px;
   }
 
   .table {

@@ -5,29 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="A polished, browser-based blackjack table."
+      content="A polished browser casino with Blackjack and European Roulette."
     />
-    <title>Twenty One | Blackjack</title>
+    <title>Avi's Casino</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260615-splits" />
+    <link rel="stylesheet" href="./styles.css?v=20260617-casino" />
   </head>
   <body>
     <div class="app-shell">
       <header class="topbar">
-        <a class="brand" href="#" aria-label="Twenty One blackjack home">
-          <span class="brand-mark" aria-hidden="true">21</span>
+        <a class="brand" href="#" aria-label="Avi's Casino home">
+          <span class="brand-mark" aria-hidden="true">AC</span>
           <span>
-            <strong>TWENTY ONE</strong>
-            <small>BLACKJACK TABLE</small>
+            <strong>AVI'S CASINO</strong>
+            <small>BLACKJACK & ROULETTE</small>
           </span>
         </a>
 
         <div class="account-strip">
+          <div class="game-switch" aria-label="Casino game">
+            <button
+              class="active"
+              data-game-switch="blackjack"
+              type="button"
+            >
+              Blackjack
+            </button>
+            <button data-game-switch="roulette" type="button">Roulette</button>
+          </div>
           <div class="view-switch" aria-label="Layout view">
             <button
               class="active"
@@ -65,7 +75,7 @@
         </div>
       </header>
 
-      <main class="game-layout">
+      <main class="game-layout casino-game-view" id="blackjack-view">
         <section class="table-wrap" aria-label="Blackjack table">
           <div class="table">
             <div class="table-glow" aria-hidden="true"></div>
@@ -244,36 +254,228 @@
           </section>
         </aside>
       </main>
+
+      <main
+        class="game-layout roulette-layout casino-game-view"
+        id="roulette-view"
+        hidden
+      >
+        <section class="roulette-wrap" aria-label="European Roulette table">
+          <div class="roulette-table">
+            <div class="roulette-hero">
+              <div>
+                <span class="eyebrow">EUROPEAN ROULETTE</span>
+                <h1>Single zero. Full table.</h1>
+                <p>
+                  Place inside, outside, racetrack, or saved bets. Bets become
+                  active only when you press Spin.
+                </p>
+              </div>
+              <div class="roulette-result" id="roulette-result">
+                <span>Last spin</span>
+                <strong>--</strong>
+                <small>Place bets to start</small>
+              </div>
+            </div>
+
+            <div class="roulette-board-shell">
+              <div class="roulette-board-heading">
+                <span>Inside board</span>
+                <small>1p minimum · inside bets cumulative</small>
+              </div>
+              <div class="roulette-number-grid" id="roulette-number-grid"></div>
+              <div class="roulette-combo-grid" id="roulette-combo-grid"></div>
+            </div>
+
+            <div class="roulette-outside-shell">
+              <div class="roulette-board-heading">
+                <span>Outside bets</span>
+                <small>Minimums and maximums apply per position</small>
+              </div>
+              <div class="roulette-outside-grid" id="roulette-outside-grid"></div>
+            </div>
+
+            <div class="roulette-racetrack-shell">
+              <div class="roulette-board-heading">
+                <span>Racetrack</span>
+                <small>Neighbours, French bets, and colour split shortcuts</small>
+              </div>
+              <div class="racetrack-numbers" id="racetrack-numbers"></div>
+              <div class="roulette-special-grid" id="roulette-special-grid"></div>
+            </div>
+          </div>
+
+          <div class="roulette-control-deck">
+            <div class="bet-controls">
+              <div class="control-label">
+                <span>Select chip</span>
+                <span class="bet-edit-actions">
+                  <button id="roulette-undo-bet" type="button">Undo</button>
+                  <button
+                    class="clear-bet-button"
+                    id="roulette-clear-bets"
+                    type="button"
+                  >
+                    Clear bets
+                  </button>
+                </span>
+              </div>
+              <div class="chip-rack">
+                <div
+                  class="chips"
+                  id="roulette-primary-chips"
+                  aria-label="Roulette chip selector"
+                ></div>
+                <div class="extra-chips-wrap">
+                  <button
+                    class="extra-chips-toggle"
+                    id="roulette-extra-chips-toggle"
+                    type="button"
+                    aria-expanded="false"
+                    aria-controls="roulette-extra-chips"
+                  >
+                    Extra
+                  </button>
+                  <div class="extra-chips" id="roulette-extra-chips" hidden></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="roulette-actions">
+              <button class="action-button secondary" id="roulette-save-bet" type="button">
+                Save current bet
+              </button>
+              <button class="action-button primary" id="roulette-spin" type="button">
+                Spin
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="sidebar roulette-sidebar">
+          <section class="side-card roulette-slip-card">
+            <div class="side-card-heading">
+              <div>
+                <span class="eyebrow">BET SLIP</span>
+                <h3>Current roulette bets</h3>
+              </div>
+              <strong id="roulette-total-stake">£0</strong>
+            </div>
+            <ol class="history-list roulette-bet-list" id="roulette-bet-list">
+              <li class="empty-history">No bets placed yet.</li>
+            </ol>
+            <p class="roulette-validation" id="roulette-validation"></p>
+          </section>
+
+          <section class="side-card">
+            <div class="side-card-heading">
+              <div>
+                <span class="eyebrow">SAVED</span>
+                <h3>My bets</h3>
+              </div>
+            </div>
+            <div class="saved-bets" id="roulette-saved-bets">
+              <p class="empty-history">Saved bets will appear here.</p>
+            </div>
+          </section>
+
+          <section class="side-card roulette-info-card">
+            <div class="roulette-info-tabs" role="tablist" aria-label="Roulette information">
+              <button class="active" data-roulette-info="paytable" type="button">
+                Paytable
+              </button>
+              <button data-roulette-info="rules" type="button">Rules</button>
+            </div>
+            <div id="roulette-paytable-panel"></div>
+            <div id="roulette-rules-panel" hidden>
+              <p>
+                European Roulette uses one zero and numbers 1 to 36. Inside
+                minimums are cumulative. Outside minimums and maximums are
+                individual per wager position.
+              </p>
+              <p>
+                Winning bets return the original stake plus the displayed odds.
+                Racetrack neighbour bets place chips on the chosen number and
+                two wheel neighbours either side.
+              </p>
+              <small class="malfunction-copy">Malfunction voids all pays and plays.</small>
+            </div>
+          </section>
+        </aside>
+      </main>
     </div>
 
     <dialog id="session-dialog">
       <form id="session-form">
-        <span class="eyebrow">TABLE SETUP</span>
-        <h2>Choose your game mode</h2>
-        <p>Perfect Strategy adds coaching without changing the casino rules.</p>
+        <span class="eyebrow">CASINO SETUP</span>
+        <h2>Start your session</h2>
+        <p>Choose a game, wallet style, and Blackjack mode.</p>
 
-        <div class="game-mode-options" aria-label="Game mode">
-          <label>
-            <input name="game-mode" type="radio" value="normal" checked />
-            <span>
-              <strong>Normal</strong>
-              <small>Standard table play.</small>
-            </span>
-          </label>
-          <label>
-            <input name="game-mode" type="radio" value="hard" />
-            <span>
-              <strong>Hard</strong>
-              <small>Bankroll stays locked.</small>
-            </span>
-          </label>
-          <label>
-            <input name="game-mode" type="radio" value="perfect" />
-            <span>
-              <strong>Perfect Strategy</strong>
-              <small>Hints and move feedback.</small>
-            </span>
-          </label>
+        <div class="session-section">
+          <span class="session-section-title">Game</span>
+          <div class="game-mode-options casino-game-options" aria-label="Starting game">
+            <label>
+              <input name="session-game" type="radio" value="blackjack" checked />
+              <span>
+                <strong>Blackjack</strong>
+                <small>Twenty One table.</small>
+              </span>
+            </label>
+            <label>
+              <input name="session-game" type="radio" value="roulette" />
+              <span>
+                <strong>Roulette</strong>
+                <small>European single zero.</small>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="session-section">
+          <span class="session-section-title">Wallet</span>
+          <div class="game-mode-options wallet-mode-options" aria-label="Wallet mode">
+            <label>
+              <input name="wallet-mode" type="radio" value="universal" checked />
+              <span>
+                <strong>Universal</strong>
+                <small>One balance across games.</small>
+              </span>
+            </label>
+            <label>
+              <input name="wallet-mode" type="radio" value="local" />
+              <span>
+                <strong>Local</strong>
+                <small>Separate game balances.</small>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="session-section">
+          <span class="session-section-title">Blackjack mode</span>
+          <div class="game-mode-options" aria-label="Blackjack mode">
+            <label>
+              <input name="game-mode" type="radio" value="normal" checked />
+              <span>
+                <strong>Normal</strong>
+                <small>Standard table play.</small>
+              </span>
+            </label>
+            <label>
+              <input name="game-mode" type="radio" value="hard" />
+              <span>
+                <strong>Hard</strong>
+                <small>Bankroll stays locked.</small>
+              </span>
+            </label>
+            <label>
+              <input name="game-mode" type="radio" value="perfect" />
+              <span>
+                <strong>Perfect Strategy</strong>
+                <small>Hints and move feedback.</small>
+              </span>
+            </label>
+          </div>
         </div>
 
         <div class="bankroll-presets" aria-label="Starting bankroll presets">
@@ -327,7 +529,7 @@
 
     <script>
       if (window.matchMedia("(max-width: 700px)").matches) {
-        window.localStorage.setItem("blackjack-view", "mobile");
+        window.localStorage.setItem("avis-casino-view", "mobile");
         window.addEventListener(
           "DOMContentLoaded",
           () => document.querySelector('[data-view="mobile"]')?.click(),
@@ -335,6 +537,6 @@
         );
       }
     </script>
-    <script type="module" src="./src/app.js?v=20260615-splits"></script>
+    <script type="module" src="./src/app.js?v=20260617-casino"></script>
   </body>
 </html>

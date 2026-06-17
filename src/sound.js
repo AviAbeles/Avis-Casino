@@ -161,4 +161,27 @@ export class TableSound {
       delay: 0.16,
     });
   }
+
+  spin() {
+    [0, 1, 2, 3, 4, 5].forEach((index) => {
+      this.tone({
+        frequency: 360 + index * 42,
+        endFrequency: 300 + index * 38,
+        duration: 0.06,
+        volume: 0.022,
+        type: "triangle",
+        delay: index * 0.065,
+      });
+    });
+  }
+
+  settle() {
+    this.tone({
+      frequency: 880,
+      endFrequency: 440,
+      duration: 0.16,
+      volume: 0.035,
+      type: "sine",
+    });
+  }
 }

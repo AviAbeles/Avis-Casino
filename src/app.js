@@ -1,13 +1,34 @@
 import { BlackjackGame, getHandTotals } from "./game.js";
+import {
+  CasinoWallet,
+  COLOR_SPLITS,
+  EUROPEAN_WHEEL,
+  ROULETTE_PAYTABLE_ROWS,
+  RouletteGame,
+  SPECIAL_BETS,
+  createBetSpec,
+  createNeighbourComponents,
+  createOutsideBet,
+  getNumberColor,
+} from "./roulette.js";
 import { TableSound } from "./sound.js";
 import { getBasicStrategyAction } from "./strategy.js";
 
 const game = new BlackjackGame();
+const roulette = new RouletteGame({
+  storage: window.localStorage,
+});
+const wallet = new CasinoWallet();
 const CARD_DELAY = 360;
-const CHIP_VALUES = [
+const BLACKJACK_CHIP_VALUES = [
   0.1, 0.25, 0.5, 1, 2, 5, 10, 25, 50, 100, 500, 1000, 5000, 10000,
 ];
-const storedMuted = window.localStorage.getItem("blackjack-muted") === "true";
+const ROULETTE_CHIP_VALUES = [
+  0.01, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 25, 50, 100, 500,
+];
+const storedMuted =
+  window.localStorage.getItem("avis-casino-muted") === "true" ||
+  window.localStorage.getItem("blackjack-muted") === "true";
 const sound = new TableSound({ muted: storedMuted });
 const money = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -28,6 +49,9 @@ function formatMoney(value) {
 
 const elements = {
   shell: document.querySelector(".app-shell"),
+  blackjackView: document.querySelector("#blackjack-view"),
+  rouletteView: document.querySelector("#roulette-view"),
+  gameSwitchButtons: [...document.querySelectorAll("[data-game-switch]")],
   balance: document.querySelector("#balance"),
   currentBet: document.querySelector("#current-bet"),
   betSpot: document.querySelector("#bet-spot"),
@@ -66,9 +90,31 @@ const elements = {
   sessionCancel: document.querySelector("#session-cancel"),
   startingBankroll: document.querySelector("#starting-bankroll"),
   bankrollPresets: [...document.querySelectorAll("[data-bankroll]")],
+  sessionGames: [...document.querySelectorAll('[name="session-game"]')],
+  walletModes: [...document.querySelectorAll('[name="wallet-mode"]')],
   gameModes: [...document.querySelectorAll('[name="game-mode"]')],
   sessionError: document.querySelector("#session-error"),
   forfeitDialog: document.querySelector("#forfeit-dialog"),
+  rouletteResult: document.querySelector("#roulette-result"),
+  rouletteNumberGrid: document.querySelector("#roulette-number-grid"),
+  rouletteComboGrid: document.querySelector("#roulette-combo-grid"),
+  rouletteOutsideGrid: document.querySelector("#roulette-outside-grid"),
+  racetrackNumbers: document.querySelector("#racetrack-numbers"),
+  rouletteSpecialGrid: document.querySelector("#roulette-special-grid"),
+  roulettePrimaryChips: document.querySelector("#roulette-primary-chips"),
+  rouletteExtraChips: document.querySelector("#roulette-extra-chips"),
+  rouletteExtraChipsToggle: document.querySelector("#roulette-extra-chips-toggle"),
+  rouletteUndoBet: document.querySelector("#roulette-undo-bet"),
+  rouletteClearBets: document.querySelector("#roulette-clear-bets"),
+  rouletteSaveBet: document.querySelector("#roulette-save-bet"),
+  rouletteSpin: document.querySelector("#roulette-spin"),
+  rouletteTotalStake: document.querySelector("#roulette-total-stake"),
+  rouletteBetList: document.querySelector("#roulette-bet-list"),
+  rouletteValidation: document.querySelector("#roulette-validation"),
+  rouletteSavedBets: document.querySelector("#roulette-saved-bets"),
+  rouletteInfoButtons: [...document.querySelectorAll("[data-roulette-info]")],
+  roulettePaytablePanel: document.querySelector("#roulette-paytable-panel"),
+  rouletteRulesPanel: document.querySelector("#roulette-rules-panel"),
 };
 
 const ui = {
@@ -79,6 +125,11 @@ const ui = {
   visibleDealerCards: 0,
   sessionRequired: true,
   extraChipsOpen: false,
+  rouletteExtraChipsOpen: false,
+  activeGame: "blackjack",
+  walletMode: "universal",
+  selectedRouletteChip: 0.01,
+  rouletteInfoPanel: "paytable",
   gameMode: "normal",
   strategyFeedback: null,
   strategyHintAction: null,
@@ -221,6 +272,53 @@ function formatChip(value) {
   return `£${value.toLocaleString("en-GB")}`;
 }
 
+function syncWalletFromActiveGame() {
+  if (ui.activeGame === "roulette") {
+    wallet.setBalance("roulette", roulette.balance);
+  } else {
+    wallet.setBalance("blackjack", game.balance);
+  }
+}
+
+function syncEngineFromWallet(gameName) {
+  const balance = wallet.getBalance(gameName);
+  if (gameName === "roulette") {
+    roulette.setBalance(balance);
+    return;
+  }
+
+  if (["betting", "round-over"].includes(game.phase)) {
+    game.balance = balance;
+    if (game.pendingBet > game.balance) game.clearBet();
+  }
+}
+
+function currentBalance() {
+  return ui.activeGame === "roulette" ? roulette.balance : game.balance;
+}
+
+function currentDisplayedBet() {
+  if (ui.activeGame === "roulette") return roulette.pendingTotal();
+
+  if (game.phase === "player" || game.phase === "dealer") {
+    return game.totalWager();
+  }
+  if (game.phase === "insurance") return game.initialBet + game.insuranceBet;
+  return game.pendingBet;
+}
+
+function canSwitchGames() {
+  return !ui.busy && ["betting", "round-over"].includes(game.phase);
+}
+
+function switchGame(nextGame) {
+  if (nextGame === ui.activeGame || !canSwitchGames()) return;
+  syncWalletFromActiveGame();
+  ui.activeGame = nextGame;
+  syncEngineFromWallet(nextGame);
+  render();
+}
+
 function getPrimaryChipValues(balance) {
   if (balance <= 5) return [0.1, 0.25, 0.5, 1, 2];
   if (balance <= 25) return [0.25, 0.5, 1, 2, 5];
@@ -248,7 +346,7 @@ function chipMarkup(value, index, canBet) {
 
 function renderChips(canBet) {
   const primaryValues = getPrimaryChipValues(game.balance);
-  const extraValues = CHIP_VALUES.filter(
+  const extraValues = BLACKJACK_CHIP_VALUES.filter(
     (value) => !primaryValues.includes(value),
   );
 
@@ -263,6 +361,367 @@ function renderChips(canBet) {
     "aria-expanded",
     String(ui.extraChipsOpen),
   );
+}
+
+function getRoulettePrimaryChipValues(balance) {
+  if (balance <= 1) return [0.01, 0.05, 0.1, 0.25, 0.5];
+  if (balance <= 10) return [0.01, 0.1, 0.25, 0.5, 1];
+  if (balance <= 100) return [0.01, 0.1, 1, 5, 10];
+  if (balance <= 1000) return [0.01, 1, 5, 25, 50];
+  return [0.01, 5, 25, 100, 500];
+}
+
+function rouletteChipMarkup(value, index) {
+  const unavailable = ui.busy || roulette.pendingTotal() + value > roulette.balance;
+  return `
+    <button
+      class="chip chip-tone-${index % 8} ${ui.selectedRouletteChip === value ? "selected-chip" : ""}"
+      data-roulette-chip="${value}"
+      type="button"
+      aria-label="Select ${formatChip(value)} chip"
+      aria-pressed="${ui.selectedRouletteChip === value}"
+      ${unavailable ? "disabled" : ""}
+    >
+      ${formatChip(value)}
+    </button>
+  `;
+}
+
+function renderRouletteChips() {
+  const primaryValues = getRoulettePrimaryChipValues(roulette.balance);
+  const extraValues = ROULETTE_CHIP_VALUES.filter(
+    (value) => !primaryValues.includes(value),
+  );
+
+  elements.roulettePrimaryChips.innerHTML = primaryValues
+    .map((value, index) => rouletteChipMarkup(value, index))
+    .join("");
+  elements.rouletteExtraChips.innerHTML = extraValues
+    .map((value, index) => rouletteChipMarkup(value, index + 4))
+    .join("");
+  elements.rouletteExtraChips.hidden = !ui.rouletteExtraChipsOpen;
+  elements.rouletteExtraChipsToggle.setAttribute(
+    "aria-expanded",
+    String(ui.rouletteExtraChipsOpen),
+  );
+}
+
+function numbersLabel(numbers) {
+  return numbers.join("/");
+}
+
+function stakeForPosition(positionKey) {
+  return (
+    roulette.pendingBets.find((bet) => bet.positionKey === positionKey)?.stake ||
+    0
+  );
+}
+
+function stakeBadge(stake) {
+  return stake > 0 ? `<small>${formatMoney(stake)}</small>` : "";
+}
+
+function rouletteButton({
+  className = "",
+  label,
+  type,
+  numbers,
+  section,
+  positionKey,
+}) {
+  const spec = createBetSpec({ type, label, numbers, section, positionKey });
+  const stake = stakeForPosition(spec.positionKey);
+  return `
+    <button
+      class="${className} ${stake > 0 ? "has-stake" : ""}"
+      data-roulette-type="${spec.type}"
+      data-roulette-label="${spec.label}"
+      data-roulette-numbers="${spec.numbers.join(",")}"
+      data-roulette-section="${spec.section}"
+      data-roulette-position="${spec.positionKey}"
+      type="button"
+      ${ui.busy ? "disabled" : ""}
+    >
+      <span>${label}</span>${stakeBadge(stake)}
+    </button>
+  `;
+}
+
+function renderRouletteNumberGrid() {
+  const zeroButton = rouletteButton({
+    className: "roulette-number roulette-number-zero green-number",
+    label: "0",
+    type: "straight",
+    numbers: [0],
+  });
+  const numberButtons = Array.from({ length: 36 }, (_, index) => index + 1)
+    .map((number) =>
+      rouletteButton({
+        className: `roulette-number ${getNumberColor(number)}-number`,
+        label: String(number),
+        type: "straight",
+        numbers: [number],
+      }),
+    )
+    .join("");
+
+  elements.rouletteNumberGrid.innerHTML = `
+    ${zeroButton}
+    <div class="roulette-main-numbers">${numberButtons}</div>
+  `;
+}
+
+function rowStarts(limit = 34) {
+  const starts = [];
+  for (let start = 1; start <= limit; start += 3) starts.push(start);
+  return starts;
+}
+
+function splitSpecs() {
+  const specs = [
+    [0, 1],
+    [0, 2],
+    [0, 3],
+  ];
+  for (const start of rowStarts()) {
+    specs.push([start, start + 1], [start + 1, start + 2]);
+  }
+  for (let number = 1; number <= 33; number += 1) {
+    specs.push([number, number + 3]);
+  }
+  return specs;
+}
+
+function renderRouletteComboGrid() {
+  const streets = rowStarts()
+    .map((start) =>
+      rouletteButton({
+        className: "roulette-combo-button",
+        label: `${start}-${start + 2}`,
+        type: "street",
+        numbers: [start, start + 1, start + 2],
+      }),
+    )
+    .join("");
+  const lines = rowStarts(31)
+    .map((start) =>
+      rouletteButton({
+        className: "roulette-combo-button",
+        label: `${start}-${start + 5}`,
+        type: "line",
+        numbers: [start, start + 1, start + 2, start + 3, start + 4, start + 5],
+      }),
+    )
+    .join("");
+  const corners = rowStarts(31)
+    .flatMap((start) => [
+      [start, start + 1, start + 3, start + 4],
+      [start + 1, start + 2, start + 4, start + 5],
+    ])
+    .map((numbers) =>
+      rouletteButton({
+        className: "roulette-combo-button",
+        label: numbersLabel(numbers),
+        type: "corner",
+        numbers,
+      }),
+    )
+    .join("");
+  const splits = splitSpecs()
+    .map((numbers) =>
+      rouletteButton({
+        className: "roulette-combo-button",
+        label: numbersLabel(numbers),
+        type: "split",
+        numbers,
+      }),
+    )
+    .join("");
+
+  elements.rouletteComboGrid.innerHTML = `
+    <details open>
+      <summary>Street bets</summary>
+      <div>${streets}</div>
+    </details>
+    <details>
+      <summary>Line bets</summary>
+      <div>${lines}</div>
+    </details>
+    <details>
+      <summary>Corner bets</summary>
+      <div>${corners}</div>
+    </details>
+    <details>
+      <summary>Split bets</summary>
+      <div>${splits}</div>
+    </details>
+  `;
+}
+
+function renderRouletteOutsideGrid() {
+  const outsideBets = [
+    ["red", "Red"],
+    ["black", "Black"],
+    ["odd", "Odd"],
+    ["even", "Even"],
+    ["low", "1-18"],
+    ["high", "19-36"],
+    ["dozen-1", "1st 12"],
+    ["dozen-2", "2nd 12"],
+    ["dozen-3", "3rd 12"],
+    ["column-1", "Column 1"],
+    ["column-2", "Column 2"],
+    ["column-3", "Column 3"],
+  ];
+
+  elements.rouletteOutsideGrid.innerHTML = outsideBets
+    .map(([kind, label]) => {
+      const spec = createOutsideBet(kind, label);
+      const stake = stakeForPosition(spec.positionKey);
+      return `
+        <button
+          class="roulette-outside-button ${kind} ${stake > 0 ? "has-stake" : ""}"
+          data-roulette-type="${spec.type}"
+          data-roulette-label="${spec.label}"
+          data-roulette-numbers="${spec.numbers.join(",")}"
+          data-roulette-section="${spec.section}"
+          data-roulette-position="${spec.positionKey}"
+          type="button"
+          ${ui.busy ? "disabled" : ""}
+        >
+          <span>${label}</span>${stakeBadge(stake)}
+        </button>
+      `;
+    })
+    .join("");
+}
+
+function renderRacetrack() {
+  elements.racetrackNumbers.innerHTML = EUROPEAN_WHEEL.map((number) => `
+    <button
+      class="racetrack-number ${getNumberColor(number)}-number"
+      data-racetrack-number="${number}"
+      type="button"
+      ${ui.busy ? "disabled" : ""}
+    >
+      ${number}
+    </button>
+  `).join("");
+
+  const specialButtons = Object.entries(SPECIAL_BETS)
+    .map(([key, bet]) => `
+      <button data-special-bet="${key}" type="button" ${ui.busy ? "disabled" : ""}>
+        ${bet.label}
+      </button>
+    `)
+    .join("");
+  const colorSplitButtons = Object.keys(COLOR_SPLITS)
+    .map((color) => `
+      <button data-color-splits="${color}" type="button" ${ui.busy ? "disabled" : ""}>
+        ${color === "red" ? "Red splits" : "Black splits"}
+      </button>
+    `)
+    .join("");
+
+  elements.rouletteSpecialGrid.innerHTML = specialButtons + colorSplitButtons;
+}
+
+function renderRouletteBetList() {
+  if (!roulette.pendingBets.length) {
+    elements.rouletteBetList.innerHTML =
+      '<li class="empty-history">No bets placed yet.</li>';
+    return;
+  }
+
+  elements.rouletteBetList.innerHTML = roulette.pendingBets
+    .map((bet) => `
+      <li class="history-item">
+        <i class="history-mark"></i>
+        <span>${bet.label} · ${bet.numbers.length} number${bet.numbers.length === 1 ? "" : "s"}</span>
+        <strong>${formatMoney(bet.stake)}</strong>
+      </li>
+    `)
+    .join("");
+}
+
+function renderRouletteSavedBets() {
+  const savedBets = roulette.getSavedBets();
+  if (!savedBets.length) {
+    elements.rouletteSavedBets.innerHTML =
+      '<p class="empty-history">Saved bets will appear here.</p>';
+    return;
+  }
+
+  elements.rouletteSavedBets.innerHTML = savedBets
+    .map((savedBet) => `
+      <div class="saved-bet">
+        <span>${savedBet.name}</span>
+        <strong>${formatMoney(savedBet.bets.reduce((total, bet) => total + bet.stake, 0))}</strong>
+        <button data-replay-saved-bet="${savedBet.id}" type="button">Play</button>
+        <button data-delete-saved-bet="${savedBet.id}" type="button">Delete</button>
+      </div>
+    `)
+    .join("");
+}
+
+function renderRoulettePaytable() {
+  elements.roulettePaytablePanel.hidden = ui.rouletteInfoPanel !== "paytable";
+  elements.rouletteRulesPanel.hidden = ui.rouletteInfoPanel !== "rules";
+  for (const button of elements.rouletteInfoButtons) {
+    button.classList.toggle(
+      "active",
+      button.dataset.rouletteInfo === ui.rouletteInfoPanel,
+    );
+  }
+
+  elements.roulettePaytablePanel.innerHTML = `
+    <table class="roulette-paytable">
+      <thead>
+        <tr><th>Bet name</th><th>Min</th><th>Max</th><th>Odds</th></tr>
+      </thead>
+      <tbody>
+        ${ROULETTE_PAYTABLE_ROWS.map((row) => `
+          <tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderRoulette() {
+  renderRouletteNumberGrid();
+  renderRouletteComboGrid();
+  renderRouletteOutsideGrid();
+  renderRacetrack();
+  renderRouletteChips();
+  renderRouletteBetList();
+  renderRouletteSavedBets();
+  renderRoulettePaytable();
+
+  const errors = roulette.validationErrors();
+  elements.rouletteValidation.textContent = errors[0] || roulette.message;
+  elements.rouletteTotalStake.textContent = formatMoney(roulette.pendingTotal());
+  elements.rouletteUndoBet.disabled = ui.busy || roulette.betStack.length === 0;
+  elements.rouletteClearBets.disabled = ui.busy || roulette.pendingBets.length === 0;
+  elements.rouletteSaveBet.disabled = ui.busy || roulette.pendingBets.length === 0;
+  elements.rouletteSpin.disabled = ui.busy || !roulette.canSpin();
+  elements.rouletteExtraChipsToggle.disabled = ui.busy;
+
+  const resultStrong = elements.rouletteResult.querySelector("strong");
+  const resultSmall = elements.rouletteResult.querySelector("small");
+  elements.rouletteResult.classList.remove("red-number", "black-number", "green-number");
+  if (ui.busy && ui.activeGame === "roulette") {
+    resultStrong.textContent = "SPIN";
+    resultSmall.textContent = "Wheel in motion";
+  } else if (roulette.lastSpin) {
+    resultStrong.textContent = roulette.lastSpin.number;
+    resultSmall.textContent =
+      `${roulette.lastSpin.color} · ${roulette.lastSpin.amount >= 0 ? "+" : ""}${formatMoney(roulette.lastSpin.amount)}`;
+    elements.rouletteResult.classList.add(`${roulette.lastSpin.color}-number`);
+  } else {
+    resultStrong.textContent = "--";
+    resultSmall.textContent = "Place bets to start";
+  }
 }
 
 function renderStatus() {
@@ -372,27 +831,39 @@ function renderControls() {
 }
 
 function render() {
-  elements.balance.textContent = formatMoney(game.balance);
-  const displayedBet =
-    game.phase === "player" || game.phase === "dealer"
-      ? game.totalWager()
-      : game.phase === "insurance"
-        ? game.initialBet + game.insuranceBet
-      : game.pendingBet;
+  syncWalletFromActiveGame();
+  elements.blackjackView.hidden = ui.activeGame !== "blackjack";
+  elements.rouletteView.hidden = ui.activeGame !== "roulette";
+  for (const button of elements.gameSwitchButtons) {
+    button.classList.toggle("active", button.dataset.gameSwitch === ui.activeGame);
+    button.disabled = button.dataset.gameSwitch !== ui.activeGame && !canSwitchGames();
+  }
+
+  elements.balance.textContent = formatMoney(currentBalance());
+  const displayedBet = currentDisplayedBet();
   elements.currentBet.textContent = formatMoney(displayedBet);
   elements.betSpotValue.textContent = formatMoney(displayedBet);
-  elements.betSpot.classList.toggle("visible", displayedBet > 0);
+  elements.betSpot.classList.toggle(
+    "visible",
+    ui.activeGame === "blackjack" && displayedBet > 0,
+  );
   elements.wins.textContent = game.stats.wins;
   elements.pushes.textContent = game.stats.pushes;
   elements.losses.textContent = game.stats.losses;
-  elements.modeBadge.hidden = ui.gameMode === "normal";
+  elements.modeBadge.hidden =
+    ui.activeGame === "blackjack" && ui.gameMode === "normal";
   elements.modeBadge.textContent =
-    ui.gameMode === "perfect" ? "Perfect strategy" : "Hard mode";
+    ui.activeGame === "roulette"
+      ? "European Roulette"
+      : ui.gameMode === "perfect"
+        ? "Perfect strategy"
+        : "Hard mode";
   elements.modeBadge.classList.toggle(
     "strategy-mode-badge",
-    ui.gameMode === "perfect",
+    ui.gameMode === "perfect" || ui.activeGame === "roulette",
   );
   elements.shell.classList.toggle("strategy-mode", ui.gameMode === "perfect");
+  elements.shell.classList.toggle("roulette-mode", ui.activeGame === "roulette");
   elements.sessionSettings.textContent =
     game.hardMode && game.challengeActive && !game.isBankrupt()
       ? "Forfeit"
@@ -409,6 +880,7 @@ function render() {
   renderHistory();
   renderStatus();
   renderControls();
+  renderRoulette();
 }
 
 function wait(duration) {
@@ -557,6 +1029,52 @@ function handleChipClick(event) {
   }
 }
 
+function rouletteSpecFromDataset(dataset) {
+  return {
+    type: dataset.rouletteType,
+    label: dataset.rouletteLabel,
+    numbers: dataset.rouletteNumbers.split(",").map(Number),
+    section: dataset.rouletteSection,
+    positionKey: dataset.roulettePosition,
+  };
+}
+
+function placeRouletteBet(spec) {
+  if (roulette.placeBet(spec, ui.selectedRouletteChip)) {
+    sound.chip();
+    render();
+  }
+}
+
+function placeRouletteComponents(placed) {
+  if (placed) {
+    sound.chip();
+    render();
+  }
+}
+
+async function spinRoulette() {
+  if (ui.busy || !roulette.canSpin()) return;
+
+  ui.busy = true;
+  render();
+  sound.spin();
+  await wait(900);
+
+  try {
+    roulette.spin();
+  } catch {
+    roulette.voidSpin();
+  }
+
+  syncWalletFromActiveGame();
+  sound.settle();
+  if (roulette.result === "win") sound.win();
+  else if (roulette.result === "loss") sound.loss();
+  ui.busy = false;
+  render();
+}
+
 function currentStrategyRecommendation() {
   return getBasicStrategyAction({
     playerCards: game.activeHand?.cards || [],
@@ -602,6 +1120,123 @@ async function playTrainedAction(actionName, action, type = "action") {
 
 elements.primaryChips.addEventListener("click", handleChipClick);
 elements.extraChips.addEventListener("click", handleChipClick);
+
+for (const button of elements.gameSwitchButtons) {
+  button.addEventListener("click", () => switchGame(button.dataset.gameSwitch));
+}
+
+elements.roulettePrimaryChips.addEventListener("click", (event) => {
+  const chip = event.target.closest("[data-roulette-chip]");
+  if (!chip || chip.disabled) return;
+  ui.selectedRouletteChip = Number(chip.dataset.rouletteChip);
+  sound.chip();
+  render();
+});
+
+elements.rouletteExtraChips.addEventListener("click", (event) => {
+  const chip = event.target.closest("[data-roulette-chip]");
+  if (!chip || chip.disabled) return;
+  ui.selectedRouletteChip = Number(chip.dataset.rouletteChip);
+  sound.chip();
+  render();
+});
+
+elements.rouletteNumberGrid.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-roulette-type]");
+  if (!button || button.disabled) return;
+  placeRouletteBet(rouletteSpecFromDataset(button.dataset));
+});
+
+elements.rouletteComboGrid.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-roulette-type]");
+  if (!button || button.disabled) return;
+  placeRouletteBet(rouletteSpecFromDataset(button.dataset));
+});
+
+elements.rouletteOutsideGrid.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-roulette-type]");
+  if (!button || button.disabled) return;
+  placeRouletteBet(rouletteSpecFromDataset(button.dataset));
+});
+
+elements.racetrackNumbers.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-racetrack-number]");
+  if (!button || button.disabled) return;
+  placeRouletteComponents(
+    roulette.placeComponents(
+      createNeighbourComponents(Number(button.dataset.racetrackNumber)),
+      ui.selectedRouletteChip,
+    ),
+  );
+});
+
+elements.rouletteSpecialGrid.addEventListener("click", (event) => {
+  const special = event.target.closest("[data-special-bet]");
+  const colorSplits = event.target.closest("[data-color-splits]");
+  if (special && !special.disabled) {
+    placeRouletteComponents(
+      roulette.placeSpecialBet(special.dataset.specialBet, ui.selectedRouletteChip),
+    );
+  }
+  if (colorSplits && !colorSplits.disabled) {
+    placeRouletteComponents(
+      roulette.placeColorSplits(
+        colorSplits.dataset.colorSplits,
+        ui.selectedRouletteChip,
+      ),
+    );
+  }
+});
+
+elements.rouletteExtraChipsToggle.addEventListener("click", () => {
+  ui.rouletteExtraChipsOpen = !ui.rouletteExtraChipsOpen;
+  render();
+});
+
+elements.rouletteUndoBet.addEventListener("click", () => {
+  if (roulette.undoBet()) {
+    sound.clearChips();
+    render();
+  }
+});
+
+elements.rouletteClearBets.addEventListener("click", () => {
+  if (roulette.clearBets()) {
+    sound.clearChips();
+    render();
+  }
+});
+
+elements.rouletteSaveBet.addEventListener("click", () => {
+  const saved = roulette.saveCurrentBet(
+    `Bet ${roulette.getSavedBets().length + 1}`,
+  );
+  if (saved) {
+    sound.chip();
+    render();
+  }
+});
+
+elements.rouletteSavedBets.addEventListener("click", (event) => {
+  const replay = event.target.closest("[data-replay-saved-bet]");
+  const remove = event.target.closest("[data-delete-saved-bet]");
+  if (replay) {
+    placeRouletteComponents(roulette.replaySavedBet(replay.dataset.replaySavedBet));
+  }
+  if (remove && roulette.deleteSavedBet(remove.dataset.deleteSavedBet)) {
+    sound.clearChips();
+    render();
+  }
+});
+
+for (const button of elements.rouletteInfoButtons) {
+  button.addEventListener("click", () => {
+    ui.rouletteInfoPanel = button.dataset.rouletteInfo;
+    renderRoulettePaytable();
+  });
+}
+
+elements.rouletteSpin.addEventListener("click", spinRoulette);
 
 elements.extraChipsToggle.addEventListener("click", () => {
   ui.extraChipsOpen = !ui.extraChipsOpen;
@@ -667,7 +1302,7 @@ elements.strategyHint.addEventListener("click", () => {
 
 elements.soundToggle.addEventListener("click", () => {
   sound.setMuted(!sound.muted);
-  window.localStorage.setItem("blackjack-muted", String(sound.muted));
+  window.localStorage.setItem("avis-casino-muted", String(sound.muted));
   if (!sound.muted) sound.chip();
   render();
 });
@@ -680,7 +1315,7 @@ function setView(view, { persist = true } = {}) {
     button.classList.toggle("active", button.dataset.view === view);
     button.setAttribute("aria-pressed", String(button.dataset.view === view));
   }
-  if (persist) window.localStorage.setItem("blackjack-view", view);
+  if (persist) window.localStorage.setItem("avis-casino-view", view);
 }
 
 for (const button of elements.viewButtons) {
@@ -691,6 +1326,12 @@ function openSessionDialog(required = false) {
   ui.sessionRequired = required;
   elements.sessionCancel.hidden = required;
   elements.startingBankroll.value = String(game.startingBalance);
+  for (const sessionGame of elements.sessionGames) {
+    sessionGame.checked = sessionGame.value === ui.activeGame;
+  }
+  for (const walletMode of elements.walletModes) {
+    walletMode.checked = walletMode.value === ui.walletMode;
+  }
   for (const mode of elements.gameModes) {
     mode.checked = mode.value === ui.gameMode;
   }
@@ -715,6 +1356,12 @@ elements.sessionDialog.addEventListener("cancel", (event) => {
 elements.sessionForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const startingBalance = Number(elements.startingBankroll.value);
+  const selectedGame =
+    elements.sessionGames.find((sessionGame) => sessionGame.checked)?.value ||
+    "blackjack";
+  const selectedWalletMode =
+    elements.walletModes.find((walletMode) => walletMode.checked)?.value ||
+    "universal";
   const selectedMode =
     elements.gameModes.find((mode) => mode.checked)?.value || "normal";
 
@@ -729,10 +1376,21 @@ elements.sessionForm.addEventListener("submit", (event) => {
       return;
     }
 
+    wallet.configure({
+      mode: selectedWalletMode,
+      startingBalance,
+    });
+    roulette.configureSession({ startingBalance });
     ui.gameMode = selectedMode;
+    ui.walletMode = selectedWalletMode;
+    ui.activeGame = selectedGame;
+    syncEngineFromWallet("blackjack");
+    syncEngineFromWallet("roulette");
     ui.visiblePlayerCards = [];
     ui.visibleDealerCards = 0;
     ui.extraChipsOpen = false;
+    ui.rouletteExtraChipsOpen = false;
+    ui.selectedRouletteChip = 0.01;
     ui.strategyFeedback = null;
     ui.strategyHintAction = null;
     elements.sessionDialog.close();
@@ -770,6 +1428,13 @@ document.addEventListener("keydown", (event) => {
   }
 
   const key = event.key.toLowerCase();
+  if (ui.activeGame === "roulette") {
+    if (event.key === "Enter" && !elements.rouletteSpin.disabled) {
+      elements.rouletteSpin.click();
+    }
+    return;
+  }
+
   if (key === "h" && !elements.hit.disabled) elements.hit.click();
   if (key === "s" && !elements.stand.disabled) elements.stand.click();
   if (key === "d" && !elements.double.disabled) elements.double.click();
@@ -781,7 +1446,9 @@ const phoneViewport = window.matchMedia("(max-width: 700px)");
 setView(
   phoneViewport.matches
     ? "mobile"
-    : window.localStorage.getItem("blackjack-view") || "desktop",
+    : window.localStorage.getItem("avis-casino-view") ||
+        window.localStorage.getItem("blackjack-view") ||
+        "desktop",
   { persist: false },
 );
 

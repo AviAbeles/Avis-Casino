@@ -1,6 +1,6 @@
-# Twenty One
+# Avi's Casino
 
-A dependency-free blackjack game built with HTML, CSS, and JavaScript.
+A dependency-free browser casino built with HTML, CSS, and JavaScript.
 
 ## Run it
 
@@ -16,22 +16,32 @@ Then open [http://localhost:4173](http://localhost:4173).
 npm test
 ```
 
-The first version includes:
+## Games
 
-- A six-deck shuffled shoe
-- A fresh six-deck shuffle before every hand
-- Blackjack payouts at 3:2
+- Twenty One Blackjack with Normal, Hard, and Perfect Strategy modes
+- European Roulette with a single-zero wheel
+- Universal or local wallet setup
+- Desktop and mobile preview modes
+- Synthesized chip, card, spin, win, loss, and push sounds
+
+## Blackjack
+
+- Six-deck shuffled shoe
+- Fresh six-deck shuffle before every hand
+- Blackjack pays 3:2
 - Hit, stand, double-down, equal-value split, and insurance actions
 - Dealer draws no hole card and hits soft 17
 - Split aces receive one card per hand
 - Dealer Blackjack returns non-busted optional split/double wagers
 - No surrender, 99.40% theoretical RTP, and malfunction void handling
-- Chip-based betting and bankroll tracking
-- Adaptive chip rack from 10p to high-stakes denominations
-- Synthesized card, chip, win, loss, and push sounds with a mute control
-- Sequential card reveals with the dealer's second card held until your turn ends
-- Configurable starting bankroll
-- Optional hard mode with a locked casino-style challenge bankroll
-- Desktop and mobile preview modes
-- Session stats and round history
-- Compact, no-scroll desktop layout with responsive narrow-window support
+
+## Roulette
+
+- European 37-pocket wheel, numbered 0 to 36
+- Full inside betting: straight, split, street, corner, and line
+- Full outside betting: red/black, odd/even, low/high, dozens, and columns
+- Racetrack neighbours, Voisins du Zero, Tiers du Cylindre, Orphelins en Plein, Zero, red splits, and black splits
+- Saved bets with replay and delete controls
+- Roulette paytable minimums start at 1p
+- Inside minimums are cumulative; outside minimums and maximums are individual
+- Malfunction voids all pays and plays
