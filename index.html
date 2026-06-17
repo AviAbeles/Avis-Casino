@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260617-menu2" />
+    <link rel="stylesheet" href="./styles.css?v=20260617-menu3" />
   </head>
   <body>
     <div class="app-shell">
@@ -414,20 +414,25 @@
         <div class="session-step" id="session-step-game">
           <span class="session-section-title">Game</span>
           <div class="game-mode-options casino-game-options" aria-label="Starting game">
-            <label>
-              <input name="session-game" type="radio" value="blackjack" checked />
-              <span>
-                <strong>Blackjack</strong>
-                <small>Twenty One table.</small>
-              </span>
-            </label>
-            <label>
-              <input name="session-game" type="radio" value="roulette" />
-              <span>
-                <strong>Roulette</strong>
-                <small>European single zero.</small>
-              </span>
-            </label>
+            <button
+              class="session-choice active"
+              data-session-game-option="blackjack"
+              type="button"
+              aria-pressed="true"
+            >
+              <strong>Blackjack</strong>
+              <small>Twenty One table.</small>
+            </button>
+            <button
+              class="session-choice"
+              data-session-game-option="roulette"
+              type="button"
+              aria-pressed="false"
+            >
+              <strong>Roulette</strong>
+              <small>European single zero.</small>
+            </button>
+            <input id="session-game-value" name="session-game" type="hidden" value="blackjack" />
           </div>
         </div>
 
@@ -550,6 +555,6 @@
         );
       }
     </script>
-    <script type="module" src="./src/app.js?v=20260617-menu2"></script>
+    <script type="module" src="./src/app.js?v=20260617-menu3"></script>
   </body>
 </html>

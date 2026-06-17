@@ -99,7 +99,8 @@ const elements = {
   blackjackModeSection: document.querySelector("#blackjack-mode-section"),
   startingBankroll: document.querySelector("#starting-bankroll"),
   bankrollPresets: [...document.querySelectorAll("[data-bankroll]")],
-  sessionGames: [...document.querySelectorAll('[name="session-game"]')],
+  sessionGameValue: document.querySelector("#session-game-value"),
+  sessionGameOptions: [...document.querySelectorAll("[data-session-game-option]")],
   walletModes: [...document.querySelectorAll('[name="wallet-mode"]')],
   gameModes: [...document.querySelectorAll('[name="game-mode"]')],
   sessionError: document.querySelector("#session-error"),
@@ -1334,11 +1335,25 @@ for (const button of elements.viewButtons) {
 }
 
 function selectedSessionGame() {
-  return (
-    elements.sessionGames.find((sessionGame) => sessionGame.checked)?.value ||
-    ui.pendingSessionGame ||
-    "blackjack"
-  );
+  return elements.sessionGameValue?.value || ui.pendingSessionGame || "blackjack";
+}
+
+function syncSessionGameChoice(gameName) {
+  if (elements.sessionGameValue) {
+    elements.sessionGameValue.value = gameName;
+  }
+
+  for (const option of elements.sessionGameOptions) {
+    const active = option.dataset.sessionGameOption === gameName;
+    option.classList.toggle("active", active);
+    option.setAttribute("aria-pressed", String(active));
+  }
+}
+
+function setPendingSessionGame(gameName) {
+  ui.pendingSessionGame = gameName;
+  syncSessionGameChoice(gameName);
+  renderSessionDialogStep();
 }
 
 function renderSessionDialogStep() {
@@ -1374,11 +1389,9 @@ function openSessionDialog(required = false) {
   ui.sessionRequired = required;
   ui.sessionStep = 1;
   ui.pendingSessionGame = ui.activeGame;
+  syncSessionGameChoice(ui.activeGame);
   elements.sessionCancel.hidden = required;
   elements.startingBankroll.value = String(game.startingBalance);
-  for (const sessionGame of elements.sessionGames) {
-    sessionGame.checked = sessionGame.value === ui.activeGame;
-  }
   for (const walletMode of elements.walletModes) {
     walletMode.checked = walletMode.value === ui.walletMode;
   }
@@ -1416,10 +1429,9 @@ elements.sessionForfeit.addEventListener("click", () => {
   elements.sessionForfeit.hidden = true;
 });
 
-for (const sessionGame of elements.sessionGames) {
-  sessionGame.addEventListener("change", () => {
-    ui.pendingSessionGame = selectedSessionGame();
-    renderSessionDialogStep();
+for (const option of elements.sessionGameOptions) {
+  option.addEventListener("click", () => {
+    setPendingSessionGame(option.dataset.sessionGameOption);
   });
 }
 
